@@ -1,0 +1,97 @@
+/* 开始界面容器 */
+.start-screen {
+  width: 100%;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;  /* 改为 space-between，让标题和按钮分别在上下两端 */
+  align-items: stretch;  /* 改为 stretch，让容器撑满宽度 */
+  position: relative;
+}
+
+/* 标题容器 - 靠近顶部 */
+.title-container {
+  padding: 40px 40px 0 40px;  /* 上、右、下、左 */
+  text-align: center;
+  position: relative;  /* 加这一行 */
+  z-index: 2;
+}
+
+.title-container h1 {
+  font-size: 72px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 
+    2px 2px 0 #667eea,
+    4px 4px 0 #764ba2,
+    6px 6px 20px rgba(0, 0, 0, 0.4);
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+/* 按钮容器 - 靠近右下角 */
+.buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-end;  /* 改为 flex-end，让按钮靠右 */
+  padding: 0 40px 40px 40px;  /* 上、右、下、左 */
+  position: relative;  /* 加这一行 */
+  z-index: 2;
+}
+
+/* 按钮基础样式 */
+.btn {
+  width: 200px;
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 开始游戏按钮 - 主要颜色 */
+.btn-start {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 查看存档按钮 */
+.btn-load {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.btn-load:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+}
+
+/* 游戏说明按钮 */
+.btn-info {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.btn-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+}
+
+/* 活跃状态 */
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
