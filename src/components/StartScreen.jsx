@@ -5,6 +5,7 @@ import ParticleEffect from './ParticleEffect';
 import GameRuleModal from '../components/GameRuleModal';
 import { useAudio } from '../context/AudioContext';
 import { useGameContext } from '../context/GameContext';
+import bgStartUrl from '../assets/images/bg-start.jpg';
 
 export default function StartScreen() {
   const [isModalOpen, setIsModalOpen] = useState(false);//游戏说明弹窗
