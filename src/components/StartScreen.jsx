@@ -5,6 +5,8 @@ import ParticleEffect from './ParticleEffect';
 import GameRuleModal from '../components/GameRuleModal';
 import { useAudio } from '../context/AudioContext';
 import { useGameContext } from '../context/GameContext';
+// 必须用 import，部署到 GitHub Pages 等子路径时 url 才会带 /my-game/ 前缀；勿写 /src/assets/...
+import bgStartUrl from '../assets/images/bg-start.jpg';
 
 export default function StartScreen() {
   const [isModalOpen, setIsModalOpen] = useState(false);//游戏说明弹窗
@@ -60,7 +62,7 @@ export default function StartScreen() {
       className="start-screen"
       ref={screenRef}
       onPointerDown={onAnyPointerDown}
-      style={{ backgroundImage: `url(/src/assets/images/bg-start.jpg)` }}
+      style={{ backgroundImage: `url(${bgStartUrl})` }}
     >
       {/* 粒子效果组件 */}
       <ParticleEffect />
