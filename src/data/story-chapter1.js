@@ -15,6 +15,10 @@
  */
 // src/data/story.js
 
+import { oldstoryChapter1Graph } from './oldstory-chapter1';
+import { oldstoryChapter2Graph } from './oldstory-chapter2';
+import { oldstoryChapter3Graph } from './oldstory-chapter3';
+
 export const chapter1Graph = {
     chapter1_intro_1: {
       id: 'chapter1_intro_1',
@@ -138,6 +142,13 @@ export const chapter1Graph = {
             label: '我有好多历练点，直接用做啥委托！',  // 选项2文案
             nextId: 'chapter1_intro_fail_1',                     // 直接跳到失败节点
             failOnChoose: true,                         // 标记为“这条路是失败”
+          },
+          {
+            id: 'chapter1_intro_choice_1_c',
+            label: '现在就动身去达达利亚的老家海屑镇！',
+            // 与 oldstory-chapter1.js 中实际存在的首个节点 id 一致（曾用 chapter_1_oldstory_1 已删除会导致无法跳转）
+            nextId: 'chapter_1_oldstory_decision_1',
+            failOnChoose: false,
           },
         ],
       },
@@ -738,5 +749,9 @@ chapter1_fight_14: {
     speakerName: '你',
     text: '好，说话算话！',
     nextId: 'chapter_2_night_1', // 预留后续剧情I
-  }
+  },
+  /** 旧线节点：合并进 chapter1，避免仅依赖 story.js 展开时漏合并导致节点不存在 */
+  ...oldstoryChapter1Graph,
+  ...oldstoryChapter2Graph,
+  ...oldstoryChapter3Graph,
 };

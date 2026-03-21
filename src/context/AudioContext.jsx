@@ -4,6 +4,34 @@ import { createContext, useState, useContext, useCallback, useEffect, useRef } f
 // 创建音频上下文
 const AudioContext = createContext();
 
+/**
+ * BGM 使用全局单例 HTMLAudioElement（挂在 window 上），避免：
+ * - React StrictMode 开发环境双挂载 → 两个 new Audio() 同时播
+ * - Vite HMR 热更新重载本模块 → 旧 Audio 未 pause，新 Provider 再 new 一条轨
+ * 音量滑块只会改到 ref 指向的那一个，就会出现「静音只关掉其中一首」。
+ */
+const GLOBAL_BGM_KEY = '__react_demo_bgm_audio_singleton__';
+
+function getGlobalBgmAudio() {
+  if (typeof window === 'undefined') return null;
+  let el = window[GLOBAL_BGM_KEY];
+  if (!el) {
+    el = new Audio();
+    el.loop = true;
+    window[GLOBAL_BGM_KEY] = el;
+  }
+  return el;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    const el = typeof window !== 'undefined' ? window[GLOBAL_BGM_KEY] : null;
+    if (el && typeof el.pause === 'function') {
+      el.pause();
+    }
+  });
+}
+
 // 读取打包后的默认 BGM（你后续可扩展为按场景选择）
 // 说明：放在 src/assets 下的音频，Vite 会在打包时把它转换成可访问的 URL。
 const bgmModules = import.meta.glob('../assets/audio/bgm/*', {
@@ -31,8 +59,9 @@ export function AudioProvider({ children }) {
 
   useEffect(() => {
     bgmVolumeRef.current = bgmVolume;
-    if (bgmAudioRef.current) {
-      bgmAudioRef.current.volume = bgmVolume / 100;
+    const audio = bgmAudioRef.current ?? getGlobalBgmAudio();
+    if (audio) {
+      audio.volume = bgmVolume / 100;
     }
   }, [bgmVolume]);
 
@@ -41,9 +70,8 @@ export function AudioProvider({ children }) {
   }, [sfxVolume]);
 
   const ensureBgmAudio = useCallback(() => {
-    if (bgmAudioRef.current) return bgmAudioRef.current;
-    const audio = new Audio();
-    audio.loop = true;
+    const audio = getGlobalBgmAudio();
+    if (!audio) return null;
     bgmAudioRef.current = audio;
     return audio;
   }, []);
@@ -54,6 +82,7 @@ export function AudioProvider({ children }) {
       if (!audioUrl) return false;
 
       const audio = ensureBgmAudio();
+      if (!audio) return false;
 
       // 如果已经是同一首 BGM，就不用换 src，尽量避免“从头播放”的观感
       if (!audio.src || audio.src !== audioUrl) {
@@ -88,6 +117,7 @@ export function AudioProvider({ children }) {
       if (!audioUrl) return false;
 
       const audio = ensureBgmAudio();
+      if (!audio) return false;
       // 如果之前 prime 失败把 muted 留住了，这里强制取消静音
       audio.muted = false;
       // 更新音量（HTMLAudioElement 音量范围是 0-1）
@@ -112,7 +142,7 @@ export function AudioProvider({ children }) {
   );
 
   const stopBgm = useCallback(() => {
-    const audio = bgmAudioRef.current;
+    const audio = bgmAudioRef.current ?? getGlobalBgmAudio();
     if (!audio) return;
     audio.pause();
     // 不清空 src：避免重复切回时需要重新加载

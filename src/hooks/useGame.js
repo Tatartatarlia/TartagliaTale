@@ -227,6 +227,15 @@ export default function useGame() {
       const choice = currentNode.choices?.find((c) => c.id === choiceId);
       if (!choice) return;
 
+      const nextNode = choice.nextId ? storyGraph[choice.nextId] : null;
+      if (choice.nextId && !nextNode) {
+        console.warn(
+          '[useGame] 选项 nextId 在 storyGraph 中不存在，请检查剧情数据：',
+          choice.nextId,
+        );
+        return;
+      }
+
       // checkpoint：保存“选择发生前”的状态（回滚用）
       // 注意：只需要回到 choice 页面 + 恢复好感度即可满足当前需求。
       setCheckpoint({
@@ -246,9 +255,7 @@ export default function useGame() {
       }
 
       // 选项跳转
-      if (choice.nextId) {
-        const nextNode = storyGraph[choice.nextId];
-
+      if (choice.nextId && nextNode) {
         // 先评估失败：基于“应用完 delta 后”的好感度
         const shouldFail = evaluateFailForChoice(choice, nextNode, nextAffection);
 

@@ -137,7 +137,7 @@ export default function GameScreen() {
         </>
       )}
 
-      {/* 对话框 + 选项（固定在屏幕下方） */}
+      {/* 对话框 + 选项（固定在屏幕下方）；选项多时需可滚动，否则 overflow:hidden 会裁掉第三项导致「点了没反应」 */}
       <div
         style={{
           position: 'absolute',
@@ -149,6 +149,11 @@ export default function GameScreen() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'stretch',
+          maxHeight: 'min(92vh, 100%)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          boxSizing: 'border-box',
         }}
       >
         <div style={{ width: '100%', maxWidth: 980 }}>
