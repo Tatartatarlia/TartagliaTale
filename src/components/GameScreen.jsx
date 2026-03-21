@@ -29,7 +29,7 @@ function getSpeakerKey(speaker) {
   if (!speaker) return null;
   if (speaker === 'traveler') return 'traveler';
   if (speaker === 'paimon') return 'paimon';
-  if (speaker === 'tartaglia') return 'tartaglia';
+  if (speaker === 'tartaglia' || speaker === 'ajax') return 'tartaglia';
   return null;
 }
 

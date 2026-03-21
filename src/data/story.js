@@ -9,11 +9,17 @@
  *  - 在这里 import 并合并即可。
  */
 
-import { storyGraph as chapter1Graph } from './story-chapter1';
+import {  chapter1Graph } from './story-chapter1';
+import {  chapter2Graph } from './story-chapter2';
+import {  chapter3Graph } from './story-chapter3';
+import {  chapter4Graph } from './story-chapter4';
+import {  chapter5Graph } from './story-chapter5';
 
 export const storyGraph = {
   ...chapter1Graph,
-  // ...chapter2Graph,
-  // ...chapter3Graph,
+  ...chapter2Graph,
+  ...chapter3Graph,
+  ...chapter4Graph,
+  ...chapter5Graph,
 };
 

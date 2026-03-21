@@ -10,11 +10,11 @@ function clamp(n, min, max) {
 }
 
 // 目前先做最小可用版本：
-// - 支持 dialogue / narration：点击推进 nextId
-// - 支持 choice：渲染 choices，点击选项后跳到 nextId 并应用 affectionDelta（如有）
+// - 支持 dialogue / narration：点击推进 nextId；目标节点可带 affectionDelta（进入该节点时加减好感）
+// - 支持 choice：渲染 choices，点击选项后跳到 nextId 并应用选项上的 affectionDelta（如有）
 // - 暂不处理失败回滚/存档（后面再加）
 export default function useGame() {
-  const [mode, setMode] = useState(INITIAL_MODE); // main | story
+  const [mode, setMode] = useState(INITIAL_MODE); // main | story | failed | cleared | archive
   const [nodeId, setNodeId] = useState(null);
   const [checkpoint, setCheckpoint] = useState(null);
   const [history, setHistory] = useState([]);
@@ -51,15 +51,20 @@ export default function useGame() {
     const saved = loadGame();
     const ok = applySavedState(saved);
     if (ok) {
+      const clearedNode = saved.nodeId ? storyGraph[saved.nodeId] : null;
+      if (clearedNode?.type === 'game_clear') {
+        setMode('cleared');
+        return;
+      }
       setMode('story');
       return;
     }
 
     setMode('story');
-    setNodeId('intro_1');
+    setNodeId('chapter1_intro_1');
     setCheckpoint(null);
-    setHistory(['intro_1']);
-    setAffection({ tartaglia: 1 }); // 由数据层 meet_1 初始化前，这里先给一个默认起点
+    setHistory(['chapter1_intro_1']);
+    setAffection({ tartaglia: 1 }); // 由数据层 chapter1_meet_1 初始化前，这里先给一个默认起点
     setAffectionMeta({
       tartaglia: { max: 5, failThreshold: 0 },
     });
@@ -69,6 +74,20 @@ export default function useGame() {
     if (!nodeId) return null;
     return storyGraph[nodeId] || null;
   }, [nodeId]);
+
+  /** 任意节点（对白/旁白/选项目标等）上可写 affectionDelta，进入该节点时生效 */
+  const applyNodeAffectionDeltaIfAny = useCallback((nextNode) => {
+    const delta = nextNode?.affectionDelta?.tartaglia;
+    if (delta == null) return;
+    setAffection((prev) => ({
+      ...prev,
+      tartaglia: clamp(
+        prev.tartaglia + delta,
+        0,
+        affectionMeta.tartaglia?.max ?? 5,
+      ),
+    }));
+  }, [affectionMeta.tartaglia?.max]);
 
   const advance = useCallback(() => {
     if (!currentNode) return;
@@ -91,15 +110,21 @@ export default function useGame() {
       }));
     }
 
+    applyNodeAffectionDeltaIfAny(nextNode);
+
     setNodeId(nextId);
     setHistory((prev) => [...prev, nextId]);
-  }, [currentNode]);
+    if (nextNode.type === 'game_clear') {
+      setMode('cleared');
+    }
+  }, [applyNodeAffectionDeltaIfAny, currentNode]);
 
   const rebuildAffectionFromHistory = useCallback((historyIds) => {
     // 复原规则需与 choose/advance 的实际顺序保持一致：
     // - 从初始好感度开始
-    // - 遇到上一个节点是 choice 时：先应用 affectionDelta
-    // - 再检查目标节点是否带 affectionInit：后者覆盖前者（与 choose 内 applyAffectionInitIfAny 顺序一致）
+    // - 遇到上一个节点是 choice 时：先应用选项上的 affectionDelta
+    // - 再检查目标节点 affectionInit（覆盖）
+    // - 再应用目标节点上的 affectionDelta（加减）
     let nextAffection = { tartaglia: 1 };
     let nextMeta = { tartaglia: { max: 5, failThreshold: 0 } };
 
@@ -138,6 +163,14 @@ export default function useGame() {
         nextAffection = {
           ...nextAffection,
           tartaglia: clamp(init.value ?? nextAffection.tartaglia, 0, init.max ?? maxOf()),
+        };
+      }
+
+      const nodeDelta = nextNode?.affectionDelta?.tartaglia;
+      if (nodeDelta != null) {
+        nextAffection = {
+          ...nextAffection,
+          tartaglia: clamp(nextAffection.tartaglia + nodeDelta, 0, maxOf()),
         };
       }
     }
@@ -219,11 +252,15 @@ export default function useGame() {
         // 先评估失败：基于“应用完 delta 后”的好感度
         const shouldFail = evaluateFailForChoice(choice, nextNode, nextAffection);
 
-        // 更新 affectionInit（如果走到 meet_1 之类会初始化好感度）
+        // 更新 affectionInit（如果走到 chapter1_meet_1 之类会初始化好感度）
         applyAffectionInitIfAny(nextNode);
+        applyNodeAffectionDeltaIfAny(nextNode);
 
         if (shouldFail) {
           setMode('failed');
+          setNodeId(choice.nextId);
+        } else if (nextNode.type === 'game_clear') {
+          setMode('cleared');
           setNodeId(choice.nextId);
         } else {
           setMode('story');
@@ -234,6 +271,7 @@ export default function useGame() {
     },
     [
       applyAffectionInitIfAny,
+      applyNodeAffectionDeltaIfAny,
       affection,
       affectionMeta.tartaglia?.max,
       currentNode,
@@ -286,9 +324,9 @@ export default function useGame() {
     setMode('main');
   }, []);
 
-  // 自动保存：只在剧情/失败态时保存到唯一存档
+  // 自动保存：剧情 / 失败 / 通关界面也写入（便于读档回到通关页）
   useEffect(() => {
-    if (mode !== 'story' && mode !== 'failed') return;
+    if (mode !== 'story' && mode !== 'failed' && mode !== 'cleared') return;
     if (!nodeId) return;
     saveGame({
       nodeId,

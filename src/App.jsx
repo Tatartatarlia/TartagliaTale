@@ -5,6 +5,7 @@ import SoundControl from './components/SoundControl';
 import GameScreen from './components/GameScreen';
 import FailureScreen from './components/FailureScreen';
 import ArchiveScreen from './components/ArchiveScreen';
+import VictoryScreen from './components/VictoryScreen';
 import './App.css';
 
 function AppInner() {
@@ -13,6 +14,7 @@ function AppInner() {
     <>
       {mode === 'story' && <GameScreen />}
       {mode === 'failed' && <FailureScreen />}
+      {mode === 'cleared' && <VictoryScreen />}
       {mode === 'archive' && <ArchiveScreen />}
       {mode === 'main' && <StartScreen />}
     </>

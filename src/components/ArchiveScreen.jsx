@@ -45,15 +45,28 @@ export default function ArchiveScreen() {
     <div
       style={{
         width: '100%',
-        minHeight: '100vh',
+        height: '100vh',
         background: 'linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.65))',
         position: 'relative',
         overflow: 'hidden',
-        padding: 18,
         boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+      {/* 顶部操作栏：固定在可视区域上方，不随列表滚动 */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          gap: 12,
+          alignItems: 'center',
+          padding: '14px 18px 12px',
+          background: 'linear-gradient(180deg, rgba(10,12,18,0.92) 0%, rgba(10,12,18,0.75) 85%, transparent 100%)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          zIndex: 2,
+        }}
+      >
         <button
           onClick={() => {
             if (defaultSeUrl) playSe(defaultSeUrl);
@@ -90,6 +103,17 @@ export default function ArchiveScreen() {
         </button>
       </div>
 
+      {/* 仅对话记录区域滚动 */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          padding: '10px 18px 18px',
+        }}
+      >
       <div
         style={{
           width: '100%',
@@ -149,6 +173,7 @@ export default function ArchiveScreen() {
             })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
