@@ -107,36 +107,17 @@ export function pickStartScreenBgmUrl() {
 }
 
 /**
- * 剧情场景 BGM（放在 src/assets/audio/bgm/，文件名以此前缀开头）：
- * - 主线：nodeId 含 chapter1_ / chapter_2_ 等 → 「剧情第一章」「剧情第二章」…（中文数字一至十）
- * - 旧线：nodeId 含 oldstory → 「剧情旧线」
+ * 剧情 BGM 前缀与节点 id 的对应关系见 ../utils/storySceneFromNodeId.js
  * 若当前场景没有对应文件，则暂停 BGM（避免开始界面音乐在剧情里一直播）。
  */
-const CN_CHAPTER = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+import {
+  getStoryBgmSearchPrefixes,
+  storyBgmFilenamePrefixForNodeId,
+} from '../utils/storySceneFromNodeId.js';
 
-function chapterChineseOrdinal(n) {
-  if (n >= 1 && n <= 10) return CN_CHAPTER[n - 1];
-  if (n === 11) return '十一';
-  if (n === 12) return '十二';
-  return String(n);
-}
+export { getStoryBgmSearchPrefixes, storyBgmFilenamePrefixForNodeId };
 
-/** @returns {string|null} 用于匹配文件名的前缀 */
-export function storyBgmFilenamePrefixForNodeId(nodeId) {
-  if (!nodeId) return null;
-  const s = String(nodeId);
-  if (/oldstory/i.test(s)) return '剧情旧线';
-  let m = s.match(/chapter_(\d+)_/i);
-  if (!m) m = s.match(/chapter(\d+)_/i);
-  if (!m) return null;
-  const n = parseInt(m[1], 10);
-  if (n < 1) return null;
-  return `剧情第${chapterChineseOrdinal(n)}章`;
-}
-
-export function findStoryBgmUrl(nodeId) {
-  const prefix = storyBgmFilenamePrefixForNodeId(nodeId);
-  if (!prefix) return null;
+function findFirstBgmUrlForPrefix(prefix) {
   const hits = [];
   for (const [path, url] of Object.entries(bgmModules)) {
     const name = basenameFromModulePath(path);
@@ -144,6 +125,15 @@ export function findStoryBgmUrl(nodeId) {
   }
   hits.sort((a, b) => a.path.localeCompare(b.path));
   return hits[0]?.url ?? null;
+}
+
+export function findStoryBgmUrl(nodeId) {
+  const prefixes = getStoryBgmSearchPrefixes(nodeId);
+  for (const prefix of prefixes) {
+    const url = findFirstBgmUrlForPrefix(prefix);
+    if (url) return url;
+  }
+  return null;
 }
 
 // 默认音效（用于按钮点击等）

@@ -2,10 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useAudio } from '../context/AudioContext';
 import { useGameContext } from '../context/GameContext';
+import { getStoryBackgroundKeywords } from '../utils/storySceneFromNodeId';
 import ChoiceList from './ChoiceList';
 import DialogBox from './DialogBox';
 
 const portraitModules = import.meta.glob('../assets/images/*', {
+  eager: true,
+  import: 'default',
+});
+
+/** 剧情场景背景：放在 src/assets/images/story-bg/，文件名包含下列关键字之一即会匹配对应 nodeId 段 */
+const storyBgModules = import.meta.glob('../assets/images/story-bg/*', {
   eager: true,
   import: 'default',
 });
@@ -32,6 +39,16 @@ function getSpeakerKey(speaker) {
   if (speaker === 'paimon') return 'paimon';
   if (speaker === 'tartaglia' || speaker === 'ajax') return 'tartaglia';
   return null;
+}
+
+/** 根据节点 id 解析背景图 URL（规则见 ../utils/storySceneFromNodeId.js）；节点可写 backgroundImage 覆盖 */
+function resolveStoryBackgroundUrl(node) {
+  if (node?.backgroundImage) return node.backgroundImage;
+  const id = node?.id;
+  if (!id) return null;
+  const kws = getStoryBackgroundKeywords(id);
+  if (kws.length === 0) return null;
+  return pickPortraitUrlByFilenameIncludes(storyBgModules, kws);
 }
 
 export default function GameScreen() {
@@ -64,6 +81,7 @@ export default function GameScreen() {
 
   const portraitKey = getSpeakerKey(effectiveSpeaker);
   const portraitSrc = portraitKey ? portraitUrls[portraitKey] : null;
+  const backgroundUrl = resolveStoryBackgroundUrl(node);
 
   if (!node) return null;
 
@@ -72,19 +90,44 @@ export default function GameScreen() {
       style={{
         width: '100%',
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.6))',
+        backgroundColor: '#0f1419',
         position: 'relative',
         overflow: 'hidden',
         padding: 0,
       }}
     >
+      {backgroundUrl && (
+        <img
+          src={backgroundUrl}
+          alt=""
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+      {/* 压暗一点，保证对话框与立绘可读 */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: 'none',
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.55))',
+        }}
+      />
       {/* 右上角好感度（爱心） */}
       <div
         style={{
           position: 'absolute',
           top: 18,
           right: 18,
-          zIndex: 5,
+          zIndex: 6,
           padding: '10px 12px',
           borderRadius: 14,
           border: '1px solid rgba(255,255,255,0.15)',
@@ -111,7 +154,7 @@ export default function GameScreen() {
         </div>
       </div>
 
-      {/* 立绘层：在对话框上方/下方关系里保持“对话框后屏幕中间” */}
+      {/* 立绘：旅行者 = 对话框上方左侧；其它角色 = 高度铺满视口（100vh），底部对齐 */}
       {portraitSrc && (
         <>
           {portraitKey === 'traveler' ? (
@@ -120,12 +163,14 @@ export default function GameScreen() {
               alt="traveler portrait"
               style={{
                 position: 'absolute',
+                top: 200,
                 left: 18,
-                bottom: 170,
-                width: 240,
-                maxHeight: '48vh',
+                width: 'clamp(200px, 26vw, 280px)',
+                maxHeight: 'calc(100vh - 220px)',
+                height: 'auto',
                 objectFit: 'contain',
-                zIndex: 1,
+                objectPosition: 'top left',
+                zIndex: 2,
                 filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.35))',
                 pointerEvents: 'none',
               }}
@@ -137,12 +182,14 @@ export default function GameScreen() {
               style={{
                 position: 'absolute',
                 left: '50%',
-                bottom: 170,
+                bottom: 150,
                 transform: 'translateX(-50%)',
-                width: 360,
-                maxHeight: '55vh',
+                height: '100vh',
+                width: 'auto',
+                maxWidth: 'min(90vw, 520px)',
                 objectFit: 'contain',
-                zIndex: 1,
+                objectPosition: 'bottom center',
+                zIndex: 2,
                 filter: 'drop-shadow(0 18px 50px rgba(0,0,0,0.35))',
                 pointerEvents: 'none',
               }}
@@ -158,7 +205,7 @@ export default function GameScreen() {
           left: 0,
           right: 0,
           bottom: 0,
-          zIndex: 3,
+          zIndex: 4,
           padding: '16px 18px 18px',
           display: 'flex',
           justifyContent: 'center',
@@ -193,7 +240,7 @@ export default function GameScreen() {
       </div>
 
       {/* 返回主界面按钮 */}
-      <div style={{ position: 'absolute', top: 18, left: 18, zIndex: 6 }}>
+      <div style={{ position: 'absolute', top: 18, left: 18, zIndex: 7 }}>
         <button
           onClick={stopGameToMain}
           style={{

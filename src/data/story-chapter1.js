@@ -20,6 +20,10 @@ import { oldstoryChapter2Graph } from './oldstory-chapter2';
 import { oldstoryChapter3Graph } from './oldstory-chapter3';
 
 export const chapter1Graph = {
+    /**
+     * 开篇场景 chapter1_intro_*（至 chapter1_intro_choice_1）
+     * 背景 / BGM 与节点 id 的匹配规则见 src/utils/storySceneFromNodeId.js
+     */
     chapter1_intro_1: {
       id: 'chapter1_intro_1',
       type: 'dialogue',
